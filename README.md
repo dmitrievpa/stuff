@@ -1,2 +1,2 @@
 # stuff
-Sundries code from work and courses
+Sundry code from work and courses
