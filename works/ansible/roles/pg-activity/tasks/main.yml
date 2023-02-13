@@ -1,0 +1,6 @@
+---
+# tasks file for pg-activity
+- name: Copy files to host
+  include_tasks: files.yml
+- name: Install deb packages
+  include_tasks: packages.yml

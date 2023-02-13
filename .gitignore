@@ -4,6 +4,20 @@
 # .tfstate files
 *.tfstate
 *.tfstate.*
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.DS_Store
+**/ansible_id
+terraform.tfvars
 
 # Crash log files
 crash.log

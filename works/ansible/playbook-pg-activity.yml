@@ -1,0 +1,7 @@
+---
+- name: Run playbook
+  hosts: '{{ target }}'
+  tasks:
+  - name: Install PG-Activity
+    include_role:
+      name: pg-activity

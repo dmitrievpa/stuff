@@ -1,0 +1,8 @@
+- name: Install deb packages
+  command: dpkg -E -i {{ item }} 
+  become: true
+  with_fileglob:
+    - "{{ directory }}libpq5_14.5-1.pgdg90+1_amd64.deb"
+    - "{{ directory }}python3-psutil_5.0.1-1_amd64.deb"
+    - "{{ directory }}python3-psycopg2_2.8.6-2~pgdg90+1_amd64.deb"
+    - "{{ directory }}pg-activity_1.5.0-1.pgdg90+2_all.deb"

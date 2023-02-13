@@ -1,0 +1,27 @@
+---
+- name: Create directory
+  ansible.builtin.file:
+    path: "{{ directory + 'dependencies/' }}"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: '0755'
+    recurse: yes
+- name: Copy dependendcies files to hosts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ directory + 'dependencies/' }}"
+    mode: '0755'
+    owner: "{{ user }}"
+    group: "{{ group }}"
+  loop:
+    - "{{ pkg_1 }}"
+    - "{{ pkg_2 }}"
+    - "{{ pkg_3 }}"
+- name: Copy pg_activity to hosts
+  ansible.builtin.copy:
+    src: "{{ pkg_4 }}"
+    dest: "{{ directory }}"
+    mode: '0755'
+    owner: "{{ user }}"
+    group: "{{ group }}"

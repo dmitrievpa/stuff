@@ -1,0 +1,10 @@
+- name: Install dependencies deb packages
+  command: dpkg -E -i {{ item }}
+  become: true
+  loop:
+  - "{{ directory }}dependencies/{{ pkg_1 }}"
+  - "{{ directory }}dependencies/{{ pkg_2 }}"
+  - "{{ directory }}dependencies/{{ pkg_3 }}"
+- name: Install pg-activity package
+  command: dpkg -E -i {{ directory + pkg_4}}
+  
