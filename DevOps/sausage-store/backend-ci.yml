@@ -1,0 +1,75 @@
+stages:
+  - build
+  - release
+  - notify
+  - test
+
+build-backend-code-job:
+  stage: build
+  only:
+    changes:
+    - backend/*
+  except:
+    variables:
+    - $CI_COMMIT_MESSAGE =~ /skip pipeline/
+  script:
+    - cd backend
+    - mvn package -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dversion.application=${VERSION}
+  artifacts:
+    paths:
+      - backend/target/sausage-store-${VERSION}.jar
+      - $CI_PROJECT_DIR/.m2/
+
+spotbugs-sast:
+  variables:
+    MAVEN_REPO_PATH: $CI_PROJECT_DIR/.m2/repository
+    COMPILE: "false"
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+
+upload-backend-release:
+  stage: release
+  only:
+    changes:
+      - backend/*
+  needs:
+    - build-backend-code-job
+  script:
+    - cd backend
+    - mvn -Dmaven.repo.local=${CI_PROJECT_DIR}/.m2/repository -s settings.xml -Dversion.application=${VERSION} -DskipTests deploy
+
+sonarqube-backend-sast:
+  stage: test
+  image: maven:3.8-openjdk-16
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /run tests/ 
+  script:
+    - cd backend
+    - >
+      mvn verify sonar:sonar -Dsonar.qualitygate.wait=true
+      -Dsonar.projectKey=$SONAR_BACKEND_PROJECT_KEY
+      -Dsonar.host.url=$SONARQUBE_URL
+      -Dsonar.login=$SONAR_BACKEND_TOKEN
+      -Dsonar.projectName=$SONAR_BACKEND_PROJECT_NAME
+      -Dsonar.scm.provider=git
+  cache:
+    paths:
+      - ${CI_PROJECT_DIR}/.m2/repository 
+  needs:
+    - build-backend-code-job
+
+slack-notification-backend:
+  stage: notify
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /send notify/
+      changes:
+      - backend/**/*
+  variables:
+    ARTIFACTS_PATH: com/yandex/practicum/devops/${CI_PROJECT_NAME}
+    APP_NAME: backend
+    EXTENDS: jar
+  extends: .slack_notification
+  needs:
+    - upload-backend-release
+ 

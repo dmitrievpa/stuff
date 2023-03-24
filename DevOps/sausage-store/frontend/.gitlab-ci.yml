@@ -1,0 +1,140 @@
+cache:
+  paths:
+    - frontend/dist/frontend
+
+variables:
+  VERSION: 1.0.${CI_PIPELINE_ID}
+  ARTIFACTS_PATH: ${CI_PROJECT_NAME}
+  APP_NAME: frontend
+
+include:
+  - project: 'templates/ci'
+    file: 'DockerInDockerTemplate.yml'
+  - template: Security/Container-Scanning.gitlab-ci.yml
+
+stages:
+  - build
+  - test
+  - release
+  - notify
+  - deploy
+
+build-frontend:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  variables: 
+    KANIKO_CACHE_ARGS: "--cache=true --cache-copy-layers=true --cache-ttl=24h"
+  script:
+    - > 
+      mkdir -p /kaniko/.docker
+      echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor 
+        --context $CI_PROJECT_DIR/frontend
+        --build-arg VERSION=$VERSION
+        --dockerfile $CI_PROJECT_DIR/frontend/Dockerfile $KANIKO_CACHE_ARGS
+        --destination $CI_REGISTRY_IMAGE/sausage-frontend:$CI_COMMIT_SHA
+  rules:
+    - changes:
+           - frontend/*
+
+spotbugs-sast:
+  stage: test
+  dependencies:
+    - build-frontend 
+  variables:
+    COMPILE: "false"
+    SAST_EXCLUDED_ANALYZERS: "spotbugs"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+
+sonarqube-frontend-sast:
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  stage: test
+  variables:
+    SONAR_USER_HOME: ${CI_PROJECT_DIR}/.sonar
+    GIT_DEPTH: 0
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  script:
+    - cd frontend
+    - >
+      sonar-scanner
+      -Dsonar.projectKey=$SONAR_FRONTEND_PROJECT_KEY
+      -Dsonar.sources=.
+      -Dsonar.host.url=$SONARQUBE_URL
+      -Dsonar.login=$SONAR_FRONTEND_TOKEN
+      -Dsonar.scm.provider=git
+  cache:
+    paths:
+      - frontend/dist/frontend
+  allow_failure: true
+    
+container_scanning:
+  stage: test
+  variables:
+    CS_IMAGE: $CI_REGISTRY_IMAGE/sausage-frontend:$CI_COMMIT_SHA
+    CS_REGISTRY_USER: $DOCKER_USER
+    CS_REGISTRY_PASSWORD: ${DOCKER_TOKEN}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  artifacts:
+    paths:
+      - gl-container-scanning-report.json
+
+upload-frontend-latest:
+  dependencies:
+    - build-frontend
+  variables:
+    GIT_STRATEGY: none
+  image: docker:20.10.12-dind-rootless
+  stage: release
+  before_script:
+    - until docker info; do sleep 1; done
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $CI_REGISTRY_IMAGE/sausage-frontend:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE/sausage-frontend:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/sausage-frontend:latest
+    - docker push $CI_REGISTRY_IMAGE/sausage-frontend:latest
+
+slack-notification-frontend:
+  stage: notify
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /send notify/
+      changes:
+      - frontend/**/*
+  variables:
+    EXTENDS: tar.gz
+  script:
+      - curl -X POST -H "Content-type:application/json" --data "{'text':'Вышла новая версия ${APP_NAME} сосисочной — ${VERSION}. Скачать ${APP_NAME} можно по ссылке — ${NEXUS_REPO_URL}-${APP_NAME}/${ARTIFACTS_PATH}/${VERSION}/${CI_PROJECT_NAME}-${VERSION}.${EXTENDS}'}" ${SLACK_WEBHOOK}
+  needs:
+    - upload-frontend-latest
+
+deploy-frontend:
+  stage: deploy
+  variables:
+    VERSION: ${VERSION}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  trigger:
+    project: 'p.dmitriev/infrastructure'
+    branch: main
+    strategy: depend

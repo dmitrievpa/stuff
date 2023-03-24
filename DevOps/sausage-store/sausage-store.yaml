@@ -1,0 +1,83 @@
+version: "3.8"
+services:
+  vault:
+    image: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/vault-tls:latest
+    container_name: vault
+    environment:
+      VAULT_ADDR: "https://127.0.0.1:8200"
+    volumes:
+      - /opt/vault/config:/vault/config
+      - /opt/vault/file:/vault/file
+      - /opt/vault/logs:/vault/logs
+      - /opt/vault/tls:/vault/tls
+    ports:
+      - "8200:8200"
+    cap_add:
+        - IPC_LOCK
+    command: vault server -config=/vault/config/config.hcl
+    
+    networks:
+      - sausage-store
+  backend-blue:
+    image: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-backend:latest
+    container_name: backend-blue
+    environment:
+      SPRING_CLOUD_VAULT_TOKEN: ${SPRING_CLOUD_VAULT_TOKEN}
+      REPORT_PATH: ${REPORT_PATH}
+      VIRTUAL_HOST: backend
+    expose:
+      - "8080"
+    healthcheck:
+      test: curl --fail -s http://localhost:8080/actuator/health
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 6
+    networks:
+      - sausage-store
+  backend-green:
+    image: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-backend:latest
+    container_name: backend-green
+    environment:
+      SPRING_CLOUD_VAULT_TOKEN: ${SPRING_CLOUD_VAULT_TOKEN}
+      REPORT_PATH: ${REPORT_PATH}
+      VIRTUAL_HOST: backend
+    expose:
+      - "8080"
+    healthcheck:
+      test: curl --fail -s http://localhost:8080/actuator/health
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 6
+    networks:
+      - sausage-store
+
+  backend-report:
+    image: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-backend-report:latest
+    container_name: backend-report
+    environment:
+      SPRING_CLOUD_VAULT_TOKEN: ${SPRING_CLOUD_VAULT_TOKEN}
+      REPORT_PATH: ${REPORT_PATH}
+    expose:
+      - "8081"
+    networks:
+      - sausage-store
+  
+  frontend:
+    image: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-frontend:latest
+    container_name: frontend
+    environment:
+      DEFAULT_HOST: backend
+    volumes:
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "/opt/certbot/www/:/var/www/certbot/:ro"
+      - "/opt/certbot/conf/:/etc/letsencrypt/:ro"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - sausage-store
+
+networks:
+  sausage-store:

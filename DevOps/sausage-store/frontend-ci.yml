@@ -1,0 +1,83 @@
+variables:
+    ARTIFACTS_PATH: ${CI_PROJECT_NAME}
+    APP_NAME: frontend
+stages:
+  - build
+  - release
+  - notify
+  - test
+
+build-frontend-code-job:
+  stage: build  
+  only:
+    changes:
+    - frontend/*
+  except:
+    variables:
+    - $CI_COMMIT_MESSAGE =~ /skip pipeline/
+  script:        
+    - cd frontend
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/frontend
+      - $CI_PROJECT_DIR/.m2/
+
+spotbugs-sast:
+  variables:
+    MAVEN_REPO_PATH: $CI_PROJECT_DIR/.m2/repository
+    COMPILE: "false"
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+upload-frontend-release:
+  stage: release
+  only:
+    changes:
+    - frontend/*
+  needs:
+    - build-frontend-code-job
+  script:
+    - cd frontend/dist
+    - tar czvf sausage-store-${VERSION}.tar.gz frontend
+    - curl -v -u "${NEXUS_REPO_USER}:${NEXUS_REPO_PASS}" --upload-file sausage-store-${VERSION}.tar.gz ${NEXUS_REPO_URL}-${APP_NAME}/${ARTIFACTS_PATH}/${VERSION}/sausage-store-${VERSION}.tar.gz
+
+sonarqube-frontend-sast:
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  stage: test
+  variables:
+    SONAR_USER_HOME: ${CI_PROJECT_DIR}/.sonar
+    GIT_DEPTH: 0
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /run tests/
+  script:
+    - cd frontend
+    - >
+      sonar-scanner
+      -Dsonar.projectKey=$SONAR_FRONTEND_PROJECT_KEY
+      -Dsonar.sources=.
+      -Dsonar.host.url=$SONARQUBE_URL
+      -Dsonar.login=$SONAR_FRONTEND_TOKEN
+      -Dsonar.scm.provider=git
+  cache:
+    paths:
+      - frontend/dist/frontend
+  allow_failure: true
+  needs:
+    - build-frontend-code-job
+
+
+slack-notification-frontend:
+  stage: notify
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /send notify/
+      changes:
+      - frontend/**/*
+  variables:
+    EXTENDS: tar.gz
+  extends: .slack_notification
+  needs:
+    - upload-frontend-release
