@@ -1,0 +1,13 @@
+/opt/logs/sausage-store.log { 
+  rotate 3
+  hourly
+  compress
+  missingok
+  size 10M
+  dateext
+  dateformat -%Y%m%d%H%M%S
+  create
+  postrotate
+      echo "Sausage store backend logs have been rotated at $(date)" >> /opt/student_rotate.log
+  endscript
+}

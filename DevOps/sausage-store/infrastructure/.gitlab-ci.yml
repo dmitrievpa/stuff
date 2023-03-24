@@ -1,0 +1,61 @@
+variables:
+   VERSION: 1.0.${CI_PIPELINE_ID}
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: alpine/k8s:1.25.4
+  script:
+    - cd kubernetes
+    - sed  -i 's/0\.1\..*'/$VERSION'/g' ./sausage-store-chart/Chart.yaml
+    - helm package ./sausage-store-chart
+    - curl -u ${NEXUS_REPO_USER}:${NEXUS_REPO_PASS} ${NEXUS_REPO_HELM_URL} --upload-file ./sausage-store-${VERSION}.tgz
+
+  rules:
+    - changes:
+        - kubernetes/sausage-store-chart/**/*
+  environment:
+    name: sausage-store/$CI_COMMIT_REF_SLUG
+    url: https://std-007-030.k8s.praktikum-services.tech
+
+deploy-backend:
+  stage: deploy
+  variables:
+    argocd_app_name: sausage-store-pdmitriev
+  image:
+    name: argoproj/argocd:v2.3.3
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "pipeline"
+    - changes:
+        - kubernetes/sausage-store-chart/**/*
+  script:
+    - argocd --insecure --grpc-web --auth-token $ARGO_TOKEN --server $ARGO_SERVER app set ${argocd_app_name} -p backend.image.tag=latest
+    - argocd --insecure --grpc-web --auth-token $ARGO_TOKEN --server $ARGO_SERVER app sync ${argocd_app_name}
+deploy-backend-report:
+  stage: deploy
+  variables:
+    argocd_app_name: sausage-store-pdmitriev
+  image:
+    name: argoproj/argocd:v2.3.3
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "pipeline"
+    - changes:
+        - kubernetes/sausage-store-chart/**/*
+  script:
+    - argocd --insecure --grpc-web --auth-token $ARGO_TOKEN --server $ARGO_SERVER app set ${argocd_app_name} -p backend-report.image.tag=latest
+    - argocd --insecure --grpc-web --auth-token $ARGO_TOKEN --server $ARGO_SERVER app sync ${argocd_app_name}
+deploy-frontend:
+  stage: deploy
+  variables:
+    argocd_app_name: sausage-store-pdmitriev
+  image:
+    name: argoproj/argocd:v2.3.3
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "pipeline"
+    - changes:
+        - kubernetes/sausage-store-chart/**/*
+  script:
+    - argocd --insecure --grpc-web --auth-token $ARGO_TOKEN --server $ARGO_SERVER app set ${argocd_app_name} -p frontend.image.tag=k8s
+    - argocd --insecure --grpc-web --auth-token $ARGO_TOKEN --server $ARGO_SERVER app sync ${argocd_app_name}

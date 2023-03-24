@@ -1,0 +1,21 @@
+global:
+  environment: production
+
+backend:
+  image: 
+    repository: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-backend
+    tag: latest
+  vault:
+    tokenSecretName: vault
+
+backend-report:
+  image: 
+    repository: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-backend-report
+    tag: latest
+  vault:
+    tokenSecretName: vault
+
+frontend:
+  image:
+    repository: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-frontend
+    tag: k8s

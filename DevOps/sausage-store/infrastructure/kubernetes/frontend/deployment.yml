@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  revisionHistoryLimit: 15
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: frontend 
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      imagePullSecrets:
+        - name: docker-config-secret
+      containers:
+        - image: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-frontend:k8s
+          name: frontend
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          env:
+            - name: DEFAULT_HOST
+              valueFrom: 
+                configMapKeyRef:
+                  name: frontend-configmap
+                  key: default_host
+          ports:
+            - name: frontend
+              containerPort: 8080
+          volumeMounts:
+          - mountPath: /etc/nginx
+            name: nginx-conf
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: frontend-configmap
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+            - key: default.conf
+              path: ./conf.d/default.conf

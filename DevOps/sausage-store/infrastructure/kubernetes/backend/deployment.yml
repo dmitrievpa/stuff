@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1 #должно быть 3, но mongodb рвет больше 2-х коннектов к БД
+  revisionHistoryLimit: 15
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 2
+      maxSurge: 20%
+  selector:
+    matchLabels:
+      app: backend   
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      # нет возможности включить данный конфиг, т.к. нет возмрожности добавить label к nodes
+      # affinity:
+      #   nodeAffinity:
+      #     preferredDuringSchedulingIgnoreDuringExecution:
+      #       — weight: 80
+      #         preference:           
+      #           matchExpressions:
+      #             — key: application
+      #               operator: In
+      #               values:
+      #                 — front-pdmitriev
+      containers:
+        - image: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-backend:latest
+          name: backend
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          env:
+            - name: VIRTUAL_HOST
+              valueFrom: 
+                configMapKeyRef:
+                  name: backend-configmap
+                  key: virtual_host
+            - name: REPORT_PATH
+              valueFrom: 
+                configMapKeyRef:
+                  name: backend-configmap
+                  key: report_path
+
+            - name: SPRING_CLOUD_VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault
+                  key: vault_token
+          ports:
+            - name: backend
+              containerPort: 8080
+          livenessProbe:
+            httpGet:      
+              path: /actuator/health    
+              port: 8080     
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 6
+      imagePullSecrets:
+        - name: docker-config-secret 

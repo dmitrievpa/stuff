@@ -1,0 +1,9 @@
+- name: Install prerequisites
+  apt:
+    name:
+      - openjdk-{{ java_version }}-jdk
+      - python3-lxml
+      - acl
+    state: present
+    update-cache: yes
+  become: true

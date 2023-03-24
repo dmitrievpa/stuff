@@ -1,0 +1,41 @@
+- name: Creating work directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ frontend_service_user }}"
+    group: "{{ frontend_service_group }}"
+    mode: 0755
+    recurse: yes
+  loop:
+    - "{{ frontend_lib_directory }}"
+    - "{{ frontend_log_directory }}"
+    - "{{ frontend_tmp_directory }}"
+- name: Downloading artifact
+  ansible.builtin.get_url:
+    url: "{{ nexus_url_frontend }}/{{ nexus_artifact_path}}/{{ frontend_version }}/sausage-store-{{ frontend_version }}.tar.gz"
+    username: "{{ nexus_user }}"
+    password: "{{ nexus_pass }}"
+    dest: "{{ frontend_tmp_directory + 'sausage-store.tar.gz'}}"
+    force: yes
+    group: "{{ frontend_service_group }}"
+    owner: "{{ frontend_service_user }}"
+    mode: 0755
+- name: Unarchive frontend files
+  ansible.builtin.unarchive:
+    src: "{{ frontend_tmp_directory + 'sausage-store.tar.gz'}}"
+    dest: "{{ frontend_tmp_directory }}"
+    remote_src: yes
+    include:
+      - 'frontend/dist/frontend/'
+    mode: 0755
+    owner: www-data
+- name: Copy files to work directory
+  ansible.builtin.copy:
+    src: "{{ frontend_tmp_directory + 'frontend/dist/frontend'}}"
+    dest: "{{ frontend_lib_directory }}"
+    remote_src: yes
+    group: "{{ frontend_service_group }}"
+    owner: "{{ frontend_service_user }}"
+    mode: 0755
+    directory_mode:
+    

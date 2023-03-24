@@ -1,0 +1,10 @@
+---
+# vars file for frontend
+nexus_url_frontend: https://nexus.praktikum-services.ru/repository/sausage-store-Dmitriev-Pavel-frontend
+nexus_artifact_path: /sausage-store
+frontend_version: 1.0.161134
+frontend_service_user: www-data
+frontend_service_group: www-data
+frontend_lib_directory: /var/www-data/
+frontend_log_directory: /var/www-data/log/
+frontend_tmp_directory: /tmp/frontend/

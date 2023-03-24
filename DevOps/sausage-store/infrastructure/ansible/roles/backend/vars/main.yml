@@ -1,0 +1,23 @@
+---
+# vars file for backend
+java_version: 16
+nexus_url_backend: https://nexus.praktikum-services.ru/repository/sausage-store-Dmitriev-Pavel-backend
+nexus_artifact_path: com.yandex.practicum.devops
+nexus_artifact_name: sausage-store
+version: latest
+backend_service_user: jarservice
+backend_service_group: jarusers
+backend_report_directory: /opt/sausage-store/backend/reports/
+backend_lib_directory: /opt/sausage-store/backend/lib/
+backend_log_directory: /opt/sausage-store/backend/log/
+psql_host: rc1b-hbgrshwk67xn4wfm.mdb.yandexcloud.net
+psql_port: 6432
+psql_dbname: pdmitriev
+psql_user: pdmitriev
+psql_password: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      38623033313032346432616437646664363731366462336561356533343066393861616334366366
+      3637663366393564666130653330323932356266353934360a633266343335623636376432333564
+      39653537613665646365323931643239373161396533333932316133326232343662646161303132
+      6439643761663766630a333463613237326562313436653438393061353832376365666639613266
+      3737

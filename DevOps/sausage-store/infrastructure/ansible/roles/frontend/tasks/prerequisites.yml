@@ -1,0 +1,23 @@
+- name: "Add nodejs apt key"
+  apt_key:
+    url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+    state: present
+  become: true
+
+- name: "Add nodejs 16.x ppa for apt repo"
+  apt_repository:
+    repo: deb https://deb.nodesource.com/node_16.x focal main
+    update_cache: yes
+  become: true
+
+- name: Install nodejs
+  apt:
+    name:
+      - nodejs
+    state: present
+    update-cache: yes
+  become: true
+- name: Install http server
+  npm:
+    global: yes
+    name: http-server

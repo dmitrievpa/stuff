@@ -1,0 +1,41 @@
+---
+groups:
+  - name: Sausage store rules
+    rules:
+    - alert: InstanceDown
+      expr: up{app="backend"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        project: "sausage_store"
+        component: "Backend"
+    - alert: Error500
+      expr: http_server_requests_seconds_count{status="500"}
+      for: 1m
+      labels:
+        severity: critical
+        project: "sausage_store"
+        component: "Backend"
+      annotations:
+        summary: Error 500 (instance {{ $labels.instance }})
+        description: "Error 500 in Sausage Store App.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: HighLatency
+      expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{uri="/api/orders",status!~"4..|5.."}[5m])) > 100
+      for: 1m
+      labels:
+        severity: critical
+        project: "sausage_store"
+        component: "Backend"
+      annotations:
+        summary: Too high latency (instance {{ $labels.instance }})
+        description: "Too high latence in Sausage Store App.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: ErrorsPrometheus
+      expr: http_server_requests_seconds_count{uri="/actuator/prometheus",status=~"4..|5.."}[2m]
+      for: 1m
+      labels:
+        severity: critical
+        project: "sausage_store"
+        component: "Backend"
+      annotations:
+        summary: HTTP Error (instance {{ $labels.instance }})
+        description: "HTTP Error in Sausage Store App.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

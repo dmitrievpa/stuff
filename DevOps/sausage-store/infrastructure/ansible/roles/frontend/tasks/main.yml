@@ -1,0 +1,12 @@
+---
+# tasks file for frontend
+- name: Install required software
+  include_tasks: prerequisites.yml
+- name: Add service account
+  include_tasks: user.yml
+- name: Download artifact
+  include_tasks: artifact.yml
+- name: Create systemd-unit files
+  include_tasks: systemd-unit.yml
+- name: Start backend service
+  include_tasks: start_service.yml

@@ -1,0 +1,16 @@
+#cloud-config
+users:
+  - default
+  - name: ubuntu
+    shell: /bin/bash
+    groups: sudo
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    home: /home/ubuntu
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+I5gEQSl/pOwmrQ2W+UlsqstSgHm3YvS3Rvnu7Fp7fx4Q/IvpM5bgB2opaaYbeC45tTZzHnuTnybBd3NeCjcVDLppVxRTh4v/CHRj8htFMimVgkDt7r1fDqp+X8OJZ/Ty4ytEUYYlGxNmrMQSrL5Gnjpbx+uEnk8+i+O9OeRNSG9ympbUtWmijtNFZdBmJvPYVvgnJ0G9x5nkICku5mL5WQuTWbHqgqSAZjsvJuk/5VkUC6squ2uscvl7g+FNKs67CLoZnONcIG5wr9t/yyTFhvE5FwUpJ2XNpZMaNj9hlcXJRBNWfWASBVoQDup8u9T6OtF8ogJiYYO1fx8YRwTxxTWxNuJ3ZDQTYuSkjB7xQnuLwCUXtvhmIj07+XstWjd4BqPcIQu523O8zZThbw/Kf0HiYCFWuo/g9QrpjXalIXPPFbEDv5duE/2EFivrAUSmrMK3uqoIL9ggCPsdQWkc3DCaHhUmh4hUJzR3Fwp7Ey5NhD/Gw7d7V1R9fC0Bsc0= paveldmitriev@MacBook-Air-2.local
+  - name: ansible
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    home: /home/ansible
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCutjqMw85GpzV6oYaucMOEnSd0ld0NlRKsSqN4NTrli1vHy+ksa2hk7yByNFcrl7nugzm4vJi0ypsILgY4jNlsMjtPqlsorY7TqTOiJ4o7JK2B5oGMTRXQkJddNDOfxapyTbtNGOMAdF1sdpDDQ5RVv9z96hOvyCsUDf2zlgaYqCDCgZzqPpfDG0o0BD+iC66nLSkpguMVddEhhbrByVeLN/wDmv99C3HktBCp1QGa+sDRD1Sbz9FmWoGnvmtVI2ZbiqlCXdX8qrDHLKSG/xgPPpU1vI+6H3qSuvoTVkiLIqaWwKXZrMIDacFQiKTzzlkJUM5xBoX5p7TZPT8P5+Ogx1+GpLP5yjWdF4PsTTZg+TWC+lll23iblyfbVHo7a8NbfjCxRj5gx4258y/A0697bfbQhGIJCFOQhlMlte0g+Ich8gpNYjzWdeROH09BzV1uIslE1vCAev17DGQXDcgBTQnzOa74Rp+K3+msVMSKZJetGSA3cHzJCue/YZJ9FqE= Ansible_user_ssh_key

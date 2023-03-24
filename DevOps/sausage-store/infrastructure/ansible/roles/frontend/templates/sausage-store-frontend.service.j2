@@ -1,0 +1,14 @@
+[Unit]
+Description=Sausages store frontend
+After=remote-fs.target network.target sausage-store-backend.service
+
+[Service]
+WorkingDirectory={{ frontend_lib_directory + 'frontend' }}
+ExecStart=/usr/bin/http-server -p 8081 --proxy http://localhost:8090
+StandardOutput=file:{{ frontend_log_directory + 'out-front.log'}}
+SyslogIdentifier=Sausages store frontend
+User={{ frontend_service_user }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

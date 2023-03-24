@@ -1,0 +1,4 @@
+- name: Creating sausage-store-frontend service unit 
+  template:
+    src: sausage-store-frontend.service.j2
+    dest: /etc/systemd/system/sausage-store-frontend.service

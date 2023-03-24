@@ -1,0 +1,17 @@
+- name: Create group {{ backend_service_group }}
+  ansible.builtin.group:
+    name: "{{ backend_service_group }}"
+    state: present
+- name: Create user {{ backend_service_user }}
+  ansible.builtin.user:
+    name: "{{ backend_service_user }}"
+    comment: backend run user
+    shell: /bin/bash
+    createhome: yes
+    home: "{{ '/home/' + backend_service_user }}"
+    state: present
+    groups: "{{ backend_service_group }}"
+    append: yes
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa

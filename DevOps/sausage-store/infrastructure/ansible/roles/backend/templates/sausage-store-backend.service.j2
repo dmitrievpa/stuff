@@ -1,0 +1,28 @@
+[Unit]
+Description=Sausages store backend
+After=remote-fs.target network.target
+
+[Service]
+Environment=REPORT_PATH={{ backend_report_directory }}
+Environment=PSQL_HOST={{ psql_host }}
+Environment=PSQL_PORT={{ psql_port }}
+Environment=PSQL_DBNAME={{ psql_dbname }}
+Environment=PSQL_USER={{ psql_user }}
+Environment=PSQL_PASSWORD={{ psql_password }}
+WorkingDirectory={{ backend_lib_directory }}
+StandardOutput=file:{{ backend_log_directory + 'out.log'}}
+SyslogIdentifier=Sausages store backend
+User={{ backend_service_user }}
+Restart=always
+ExecStart=/usr/bin/java \
+-Dmyserver.basePath='{{ backend_lib_directory }}' \
+-Dmyserver.bindAddr='127.0.0.1' \
+-Dserver.port='8090' \
+-Dmyserver.hostName='Sausage-store' \
+-Dspring.datasource.url=jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME} \
+-Dspring.datasource.username=${PSQL_USER} \
+-Dspring.datasource.password=${PSQL_PASSWORD} \
+-jar '{{ backend_lib_directory + 'sausage-store.jar'}}'
+SuccessExitStatus=143
+[Install]
+WantedBy=multi-user.target

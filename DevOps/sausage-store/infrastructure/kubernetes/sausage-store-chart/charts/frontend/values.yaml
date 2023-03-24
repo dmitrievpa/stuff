@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  repository: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-frontend
+  pullPolicy: Always
+  tag: "k8s"
+
+imagePullSecrets: 
+  - name: docker-config-secret
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: std-007-030.k8s.praktikum-services.tech
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+  tls:  
+    - 
+      hosts:
+        - std-007-030.k8s.praktikum-services.tech
+
+env:
+  - name: DEFAULT_HOST
+    value: backend
+resources:
+  requests:
+    cpu: 500m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: 
+  app: frontend

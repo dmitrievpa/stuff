@@ -1,0 +1,15 @@
+- name: Create group {{ frontend_service_group }}
+  ansible.builtin.group:
+    name: "{{ frontend_service_group }}"
+    state: present
+- name: Create user {{ frontend_service_user }}
+  ansible.builtin.user:
+    name: "{{ frontend_service_user }}"
+    comment: frontend run user
+    shell: /bin/bash
+    createhome: yes
+    home: "{{ '/home/' + frontend_service_user }}"
+    state: present
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa

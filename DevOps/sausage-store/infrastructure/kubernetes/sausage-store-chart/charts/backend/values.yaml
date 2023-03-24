@@ -1,0 +1,32 @@
+replicaCount: 1
+
+image:
+  repository: gitlab.praktikum-services.ru:5050/p.dmitriev/sausage-store/sausage-backend
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: 
+  - name: docker-config-secret
+
+env:
+  - name: VIRTUAL_HOST
+    value: backend
+  - name: REPORT_PATH
+    value: '/app/reports/'
+
+vault:
+  tokenSecretName: 
+
+service:
+  type: ClusterIP
+  port: 8080
+
+autoscaling:
+  enabled: false
+resources:
+  requests:
+    cpu: 500m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi

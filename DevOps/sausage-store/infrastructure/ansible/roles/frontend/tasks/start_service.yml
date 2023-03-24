@@ -1,0 +1,5 @@
+- name: Starting frontend service
+  ansible.builtin.systemd:
+    name: sausage-store-frontend.service
+    state: started
+    enabled: yes

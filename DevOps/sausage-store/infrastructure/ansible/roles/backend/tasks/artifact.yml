@@ -1,0 +1,24 @@
+- name: Creating work directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ backend_service_user }}"
+    group: "{{ backend_service_group }}"
+    mode: 0755
+    recurse: yes
+  loop:
+    - "{{ backend_lib_directory }}"
+    - "{{ backend_report_directory }}"
+    - "{{ backend_log_directory }}"
+- name: Downloading artifact
+  maven_artifact:
+    repository_url: "{{ nexus_url_backend }}"
+    group_id: "{{ nexus_artifact_path }}"
+    artifact_id: "{{ nexus_artifact_name }}"
+    version: "{{ version }}"
+    username: "{{ nexus_user }}"
+    password: "{{ nexus_pass }}"
+    dest: "{{ backend_lib_directory + 'sausage-store.jar'}}"
+    group: "{{ backend_service_group }}"
+    owner: "{{ backend_service_user }}"
+    mode: 0755
