@@ -1,0 +1,24 @@
+stages:
+  - deploy
+
+deploy-backend:
+  stage: deploy
+  image: alpine/k8s:1.25.4
+  variables:
+    argocd_app_name: momo-store
+  before_script:
+    - curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+    - install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+    - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+    - /root/yandex-cloud/bin/yc config profile create deploy
+    - /root/yandex-cloud/bin/yc config set token ${YC_TOKEN}
+    - /root/yandex-cloud/bin/yc config set cloud-id ${YC_CLOUD_ID}
+    - /root/yandex-cloud/bin/yc config set folder-id ${YC_FOLDER_ID}
+    - /root/yandex-cloud/bin/yc managed-kubernetes cluster get-credentials --name ${K8S_CLUSTER_NAME} --external
+  script:
+    - echo ${BACKEND_VERSION}
+    - export ARGO_PASS=$(kubectl --namespace argocd  get secret argocd-initial-admin-secret --output jsonpath="{.data.password}" | base64 -d)
+    - argocd login ${ARGO_SERVER} --grpc-web --username ${ARGO_USER} --password ${ARGO_PASS}
+    - argocd --grpc-web --server ${ARGO_SERVER} app set ${argocd_app_name} -p backend.image.tag=${BACKEND_VERSION}
+    - argocd --grpc-web --server ${ARGO_SERVER} app sync ${argocd_app_name}
+

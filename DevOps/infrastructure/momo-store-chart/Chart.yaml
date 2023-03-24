@@ -1,0 +1,13 @@
+apiVersion: v2
+name: momo-store
+description: Pavel Dmitriev graduate work Yandex praktikum DevOps course cohort 07 
+type: application
+
+version: 0.1.0
+appVersion: "latest"
+
+dependencies:
+  - name: backend
+    version: 0.1.0
+  - name: frontend
+    version: 0.1.0

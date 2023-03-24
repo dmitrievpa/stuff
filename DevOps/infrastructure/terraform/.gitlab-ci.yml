@@ -1,0 +1,57 @@
+stages:
+  - validate
+  - plan
+  - apply
+image:
+  name: hashicorp/terraform:latest
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+variables:
+ TF_STATE_NAME: default
+ TF_CACHE_KEY: default
+ TF_ROOT: "terraform"
+before_script:
+  - |
+    cat <<EOF > ~/.terraformrc
+    provider_installation {
+      network_mirror {
+        url = "https://terraform-mirror.yandexcloud.net/"
+        include = ["registry.terraform.io/*/*"]
+      }
+      direct {
+        exclude = ["registry.terraform.io/*/*"]
+      }
+    }
+    EOF
+  - apk update && apk add curl bash
+  - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+  - export PATH="/root/yandex-cloud/bin:$PATH"
+  - yc config profile create terraform
+  - yc config set token ${YC_TOKEN}
+  - yc config set cloud-id ${YC_CLOUD_ID}
+  - yc config set folder-id ${YC_FOLDER_ID}
+  - export YC_TOKEN=$(yc iam create-token)
+  - cd ${TF_ROOT}
+  - terraform --version
+  - terraform init -backend-config="bucket=$TF_S3_BUCKET" -backend-config="access_key=$TF_S3_ACCESSKEY" -backend-config="secret_key=$TF_S3_SECRETKEY" -backend-config="key=$TF_S3_KEY" -backend-config="region=$YC_ZONE"
+validate:
+  stage: validate
+  script:
+    - terraform validate
+plan:
+  stage: plan
+  script:
+    - terraform plan -out "planfile"
+  dependencies:
+    - validate
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/terraform/planfile
+apply:
+  stage: apply
+  script:
+    - terraform apply -input=false "planfile"
+  dependencies:
+    - plan
+  when: manual

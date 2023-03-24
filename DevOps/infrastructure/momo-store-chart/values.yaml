@@ -1,0 +1,13 @@
+global:
+  environment: production
+
+backend:
+  image: 
+    repository: gitlab.praktikum-services.ru:5050/p.dmitriev/momo-store/momo-backend
+    tag: "latest"
+
+
+frontend:
+  image:
+    repository: gitlab.praktikum-services.ru:5050/p.dmitriev/momo-store/momo-frontend
+    tag: "latest"

@@ -1,0 +1,33 @@
+stages:
+  - loki-stack
+  - prometheus-stack
+image:
+    name: alpine/k8s:1.25.4
+deploy-loki-stack:
+  stage: loki-stack
+  before_script:
+  - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+  - /root/yandex-cloud/bin/yc config profile create deploy
+  - /root/yandex-cloud/bin/yc config set token ${YC_TOKEN}
+  - /root/yandex-cloud/bin/yc config set cloud-id ${YC_CLOUD_ID}
+  - /root/yandex-cloud/bin/yc config set folder-id ${YC_FOLDER_ID}
+  - /root/yandex-cloud/bin/yc managed-kubernetes cluster get-credentials --name ${K8S_CLUSTER_NAME} --external
+  script:
+    - helm repo add loki https://grafana.github.io/loki/charts
+    - helm repo update
+    - helm upgrade --install loki loki/loki-stack --namespace=monitoring --create-namespace
+deploy-prometheus-stack:
+  stage: prometheus-stack
+  before_script:
+  - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+  - /root/yandex-cloud/bin/yc config profile create deploy
+  - /root/yandex-cloud/bin/yc config set token ${YC_TOKEN}
+  - /root/yandex-cloud/bin/yc config set cloud-id ${YC_CLOUD_ID}
+  - /root/yandex-cloud/bin/yc config set folder-id ${YC_FOLDER_ID}
+  - /root/yandex-cloud/bin/yc managed-kubernetes cluster get-credentials --name ${K8S_CLUSTER_NAME} --external
+  script:
+    - cd monitoring
+    - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    - helm repo update
+    - helm upgrade --install prometheus prometheus-community/kube-prometheus-stack --namespace=monitoring -f prometheus-stack.yaml
+
