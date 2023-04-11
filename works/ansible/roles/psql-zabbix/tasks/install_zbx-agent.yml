@@ -1,0 +1,30 @@
+- name: Install zabbix-agent
+  apt:
+    name:
+      - zabbix-agent
+    state: present
+    update-cache: yes
+  become: true
+- name: Creating zabbix agent config file 
+  template:
+    src: zabbix-agent.conf.j2
+    dest: /etc/zabbix/zabbix_agentd.d/{{ branch }}-zabbix-agent.conf
+- name: Creating postgresql template config file 
+  template:
+    src: template_db_postgresql.conf.j2
+    dest: /etc/zabbix/zabbix_agentd.d/template_db_postgresql.conf
+- name: Creating pacemaker template config file 
+  template:
+    src: pacemaker.conf.j2
+    dest: /etc/zabbix/zabbix_agentd.d/pacemaker.conf
+- name: Add zabbix user to hacluster group
+  ansible.builtin.user:
+    name: zabbix
+    shell: /bin/bash
+    groups: haclient
+    append: yes 
+- name: Starting zabbix-agent service
+  ansible.builtin.systemd:
+    name: zabbix-agent.service
+    state: started
+    enabled: yes

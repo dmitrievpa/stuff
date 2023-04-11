@@ -1,0 +1,7 @@
+---
+- name: Run playbook
+  hosts: '{{ target }}'
+  tasks:
+  - name: Install psql-zabbix
+    include_role:
+      name: psql-zabbix

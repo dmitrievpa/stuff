@@ -1,0 +1,12 @@
+---
+# vars file for psql-zabbix
+branch: nn
+zbx_proxy_ip: 10.10.10.10
+directory: /tmp/pgsql-zabbix/ 
+user: zabbix
+group: zabbix
+postgresql_master: node2
+main_port: 5433
+his_port: 5434
+cfg_main_path: /etc/postgresql/9.6/main/pg_hba.conf
+cfg_his_path: /etc/postgresql/9.6/his/pg_hba.conf

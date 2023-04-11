@@ -1,0 +1,6 @@
+---
+# tasks file for psql-zabbix
+- name: Install zabbix agent
+  include_tasks: install_zbx-agent.yml
+- name: Install posgresql prerequisites
+  include_tasks: setup_postgresql_prerequisites.yml

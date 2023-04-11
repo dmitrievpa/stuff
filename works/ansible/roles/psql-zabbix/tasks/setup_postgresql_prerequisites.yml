@@ -1,0 +1,106 @@
+- name: Create directory
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: '0755'
+    recurse: yes
+- name: Copy pgsql-querys to hosts
+  ansible.builtin.copy:
+    src: postgresql_querys.zip
+    dest: "{{ directory }}"
+    mode: '0755'
+    owner: "{{ user }}"
+    group: "{{ group }}"
+- name: Unarchive postgresql querys
+  ansible.builtin.unarchive:
+    src: "{{ directory + 'postgresql_querys.zip'}}"
+    dest: /var/lib/zabbix/
+    remote_src: yes
+    mode: 0644
+- name: create pgsql role for main
+  postgresql_user:
+    name: monuser
+    password: #Passing an MD5-hashed password, generate it with the format 'str["md5"] + md5[ password + username ]'
+    role_attr_flags: SUPERUSER
+    login_user: postgres
+    login_host: 127.0.0.1
+    port: "{{ main_port }}"
+  become: true
+  become_user: postgres
+  when: ansible_hostname == item
+  with_items: "{{ postgresql_master }}"
+- name: create pgsql role for main
+  postgresql_query:
+    db: postgres
+    query: GRANT SELECT ON pg_stat_database TO monuser;
+    login_user: postgres
+    login_host: 127.0.0.1
+    port: "{{ main_port }}"
+  become: true
+  become_user: postgres
+  when: ansible_hostname == item
+  with_items: "{{ postgresql_master }}"
+
+- name: Add permissions to hba_conf for main
+  postgresql_pg_hba:
+    dest: "{{ cfg_main_path }}"
+    contype: host
+    users: monuser
+    source: 127.0.0.1/32
+    databases: all
+    method: trust
+    create: true
+- name: Add permissions to hba_conf for main
+  postgresql_pg_hba:
+    dest: "{{ cfg_main_path }}"
+    contype: host
+    users: monuser
+    source: 0.0.0.0/0
+    databases: all
+    method: md5
+    create: true
+- name: create pgsql role for his
+  postgresql_user:
+    name: monuser
+    password: #Passing an MD5-hashed password, generate it with the format 'str["md5"] + md5[ password + username ]'
+    role_attr_flags: SUPERUSER
+    login_user: postgres
+    login_host: 127.0.0.1
+    port:  "{{ his_port }}"
+  become: true
+  become_user: postgres
+  when: ansible_hostname == item
+  with_items: "{{ postgresql_master }}"
+- name: create pgsql role for his
+  postgresql_query:
+    db: postgres
+    query: GRANT SELECT ON pg_stat_database TO monuser;
+    login_user: postgres
+    login_host: 127.0.0.1
+    port: "{{ his_port }}"
+  become: true
+  become_user: postgres
+  when: ansible_hostname == item
+  with_items: "{{ postgresql_master }}"
+
+- name: Add permissions to hba_conf for his
+  postgresql_pg_hba:
+    dest: "{{ cfg_his_path }}"
+    contype: host
+    users: monuser
+    source: 127.0.0.1/32
+    databases: all
+    method: trust
+    create: true
+- name: Add permissions to hba_conf for his
+  postgresql_pg_hba:
+    dest: "{{ cfg_his_path }}"
+    contype: host
+    users: monuser
+    source: 0.0.0.0/0
+    databases: all
+    method: md5
+    create: true
+
